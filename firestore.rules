@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 3. Primitive Definition
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Email verification check (if applicable)
+    function isVerifiedUser() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'google.com');
+    }
+
+    // 4. Match Blocks
+
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      
+      // Strict list check to prevent query scraping
+      allow list: if isOwner(uid);
+
+      allow create: if isOwner(uid) && isValidUser(incoming()) && (
+        incoming().uid == uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time
+      );
+
+      allow update: if isOwner(uid) && isValidUser(incoming()) && (
+        // Action: Update Profile Settings
+        (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'technicianId', 'updatedAt'])) &&
+        incoming().updatedAt == request.time &&
+        // Immutable check
+        incoming().uid == uid &&
+        incoming().email == existing().email
+      );
+
+      allow delete: if false; // System policy: No user deletion via client
+    }
+
+    // Validation Blueprint for User
+    function isValidUser(data) {
+      return (
+        data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+        (data.email == null || (data.email is string && data.email.size() <= 256)) &&
+        (data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 1000)) &&
+        (data.technicianId == null || (data.technicianId is string && data.technicianId.size() <= 50)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp
+      );
+    }
+  }
+}

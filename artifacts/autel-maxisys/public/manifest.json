@@ -1,0 +1,22 @@
+{
+  "name": "Autel MaxiSYS MS Ultra S2",
+  "short_name": "MaxiSYS",
+  "description": "Professional Automotive Diagnostic System",
+  "start_url": "/autel-maxisys/",
+  "scope": "/autel-maxisys/",
+  "display": "standalone",
+  "orientation": "landscape-primary",
+  "background_color": "#080b12",
+  "theme_color": "#3b82f6",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    { "src": "/autel-maxisys/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/autel-maxisys/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Live Scan",  "short_name": "Live",  "url": "/autel-maxisys/live-scan",  "description": "Real-time OBD-II data" },
+    { "name": "Full Scan",  "short_name": "Scan",  "url": "/autel-maxisys/full-scan",  "description": "Complete vehicle scan" },
+    { "name": "Battery",    "short_name": "Batt",  "url": "/autel-maxisys/battery",    "description": "Battery analyzer" },
+    { "name": "Oscilloscope","short_name":"Scope", "url": "/autel-maxisys/oscilloscope","description": "Waveform analyzer" }
+  ]
+}

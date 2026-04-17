@@ -1,0 +1,1326 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Autel MaxiSYS MS Ultra S2 Diagnostic Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: vehicles
+    description: Vehicle management
+  - name: diagnostics
+    description: Vehicle diagnostics and DTC codes
+  - name: adas
+    description: ADAS calibration
+  - name: programming
+    description: ECU programming and coding
+  - name: maintenance
+    description: Service reset and maintenance
+  - name: reports
+    description: Diagnostic reports
+  - name: updates
+    description: Software updates
+  - name: settings
+    description: System settings
+  - name: anthropic
+    description: Anthropic AI chat operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /vehicles:
+    get:
+      operationId: listVehicles
+      tags: [vehicles]
+      summary: List all saved vehicles
+      responses:
+        "200":
+          description: List of vehicles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vehicle"
+    post:
+      operationId: createVehicle
+      tags: [vehicles]
+      summary: Add a new vehicle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVehicleBody"
+      responses:
+        "201":
+          description: Vehicle created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+
+  /vehicles/{id}:
+    get:
+      operationId: getVehicle
+      tags: [vehicles]
+      summary: Get vehicle by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Vehicle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+    put:
+      operationId: updateVehicle
+      tags: [vehicles]
+      summary: Update vehicle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVehicleBody"
+      responses:
+        "200":
+          description: Updated vehicle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+    delete:
+      operationId: deleteVehicle
+      tags: [vehicles]
+      summary: Delete vehicle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /diagnostics/sessions:
+    get:
+      operationId: listDiagnosticSessions
+      tags: [diagnostics]
+      summary: List all diagnostic sessions
+      parameters:
+        - name: vehicleId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of diagnostic sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiagnosticSession"
+    post:
+      operationId: startDiagnosticSession
+      tags: [diagnostics]
+      summary: Start a new diagnostic session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartDiagnosticSessionBody"
+      responses:
+        "201":
+          description: Session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagnosticSession"
+
+  /diagnostics/sessions/{id}:
+    get:
+      operationId: getDiagnosticSession
+      tags: [diagnostics]
+      summary: Get diagnostic session details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Diagnostic session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagnosticSession"
+
+  /diagnostics/dtc:
+    get:
+      operationId: listDtcCodes
+      tags: [diagnostics]
+      summary: List DTC codes for a session
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: DTC codes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DtcCode"
+
+  /diagnostics/dtc/{id}/clear:
+    post:
+      operationId: clearDtcCode
+      tags: [diagnostics]
+      summary: Clear a specific DTC code
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: DTC cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DtcCode"
+
+  /diagnostics/live-data:
+    get:
+      operationId: getLiveData
+      tags: [diagnostics]
+      summary: Get live data stream parameters
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Live data parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LiveDataParam"
+
+  /diagnostics/summary:
+    get:
+      operationId: getDiagnosticSummary
+      tags: [diagnostics]
+      summary: Summary of all diagnostic activity
+      responses:
+        "200":
+          description: Diagnostic summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagnosticSummary"
+
+  /adas/calibrations:
+    get:
+      operationId: listAdasCalibrations
+      tags: [adas]
+      summary: List ADAS calibration records
+      parameters:
+        - name: vehicleId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Calibration records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdasCalibration"
+    post:
+      operationId: createAdasCalibration
+      tags: [adas]
+      summary: Start ADAS calibration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAdasCalibrationBody"
+      responses:
+        "201":
+          description: Calibration started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdasCalibration"
+
+  /adas/systems:
+    get:
+      operationId: listAdasSystems
+      tags: [adas]
+      summary: List supported ADAS systems
+      responses:
+        "200":
+          description: ADAS systems
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdasSystem"
+
+  /programming/sessions:
+    get:
+      operationId: listProgrammingSessions
+      tags: [programming]
+      summary: List ECU programming sessions
+      responses:
+        "200":
+          description: Programming sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProgrammingSession"
+    post:
+      operationId: startProgrammingSession
+      tags: [programming]
+      summary: Start ECU programming or coding session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartProgrammingSessionBody"
+      responses:
+        "201":
+          description: Programming session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgrammingSession"
+
+  /maintenance/resets:
+    get:
+      operationId: listServiceResets
+      tags: [maintenance]
+      summary: List service reset records
+      parameters:
+        - name: vehicleId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Service resets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceReset"
+    post:
+      operationId: performServiceReset
+      tags: [maintenance]
+      summary: Perform a service reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PerformServiceResetBody"
+      responses:
+        "201":
+          description: Service reset performed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceReset"
+
+  /maintenance/reset-types:
+    get:
+      operationId: listResetTypes
+      tags: [maintenance]
+      summary: List available service reset types
+      responses:
+        "200":
+          description: Reset types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResetType"
+
+  /reports:
+    get:
+      operationId: listReports
+      tags: [reports]
+      summary: List all diagnostic reports
+      responses:
+        "200":
+          description: Reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Generate a diagnostic report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportBody"
+      responses:
+        "201":
+          description: Report created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get report details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    delete:
+      operationId: deleteReport
+      tags: [reports]
+      summary: Delete a report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /updates/status:
+    get:
+      operationId: getUpdateStatus
+      tags: [updates]
+      summary: Get software update status
+      responses:
+        "200":
+          description: Update status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateStatus"
+
+  /updates/available:
+    get:
+      operationId: listAvailableUpdates
+      tags: [updates]
+      summary: List available software updates
+      responses:
+        "200":
+          description: Available updates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SoftwareUpdate"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get system settings
+      responses:
+        "200":
+          description: System settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update system settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemSettings"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSettings"
+
+  /settings/device-info:
+    get:
+      operationId: getDeviceInfo
+      tags: [settings]
+      summary: Get device information
+      responses:
+        "200":
+          description: Device info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceInfo"
+
+  /anthropic/conversations:
+    get:
+      operationId: listAnthropicConversations
+      tags: [anthropic]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnthropicConversation"
+    post:
+      operationId: createAnthropicConversation
+      tags: [anthropic]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnthropicConversationBody"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthropicConversation"
+  /anthropic/conversations/{id}:
+    get:
+      operationId: getAnthropicConversation
+      tags: [anthropic]
+      summary: Get conversation with messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthropicConversationWithMessages"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthropicError"
+    delete:
+      operationId: deleteAnthropicConversation
+      tags: [anthropic]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthropicError"
+  /anthropic/conversations/{id}/messages:
+    get:
+      operationId: listAnthropicMessages
+      tags: [anthropic]
+      summary: List messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnthropicMessage"
+    post:
+      operationId: sendAnthropicMessage
+      tags: [anthropic]
+      summary: Send a message and receive an AI response (SSE stream)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendAnthropicMessageBody"
+      responses:
+        "200":
+          description: SSE stream of assistant response chunks
+          content:
+            text/event-stream: {}
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: integer
+        vin:
+          type: string
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        engineType:
+          type: string
+        trimLevel:
+          type: string
+        odometer:
+          type: integer
+        licensePlate:
+          type: string
+        color:
+          type: string
+        notes:
+          type: string
+        lastDiagnosed:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - make
+        - model
+        - year
+        - createdAt
+
+    CreateVehicleBody:
+      type: object
+      properties:
+        vin:
+          type: string
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        engineType:
+          type: string
+        trimLevel:
+          type: string
+        odometer:
+          type: integer
+        licensePlate:
+          type: string
+        color:
+          type: string
+        notes:
+          type: string
+      required:
+        - make
+        - model
+        - year
+
+    DiagnosticSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        vehicleName:
+          type: string
+        status:
+          type: string
+          enum: [running, completed, failed]
+        dtcCount:
+          type: integer
+        systemsScanned:
+          type: integer
+        totalSystems:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+      required:
+        - id
+        - vehicleId
+        - status
+        - startedAt
+
+    StartDiagnosticSessionBody:
+      type: object
+      properties:
+        vehicleId:
+          type: integer
+        scanType:
+          type: string
+          enum: [full_scan, quick_scan, system_scan]
+        systems:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+      required:
+        - vehicleId
+        - scanType
+
+    DtcCode:
+      type: object
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: integer
+        code:
+          type: string
+        system:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info, pending]
+        description:
+          type: string
+        possibleCauses:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, pending, cleared, historical]
+        clearedAt:
+          type: string
+          format: date-time
+        detectedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - code
+        - system
+        - severity
+        - description
+        - status
+        - detectedAt
+
+    LiveDataParam:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        value:
+          type: string
+        unit:
+          type: string
+        minValue:
+          type: number
+        maxValue:
+          type: number
+        currentNumericValue:
+          type: number
+        status:
+          type: string
+          enum: [normal, warning, critical]
+        category:
+          type: string
+      required:
+        - id
+        - name
+        - value
+        - unit
+        - status
+
+    DiagnosticSummary:
+      type: object
+      properties:
+        totalVehicles:
+          type: integer
+        totalSessions:
+          type: integer
+        totalDtcCodes:
+          type: integer
+        activeDtcCodes:
+          type: integer
+        clearedDtcCodes:
+          type: integer
+        recentSessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiagnosticSession"
+        criticalAlerts:
+          type: integer
+      required:
+        - totalVehicles
+        - totalSessions
+        - totalDtcCodes
+        - activeDtcCodes
+        - clearedDtcCodes
+        - recentSessions
+        - criticalAlerts
+
+    AdasCalibration:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        vehicleName:
+          type: string
+        system:
+          type: string
+        calibrationType:
+          type: string
+          enum: [static, dynamic, both]
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        result:
+          type: string
+          enum: [pass, fail, incomplete]
+        notes:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - vehicleId
+        - system
+        - calibrationType
+        - status
+        - startedAt
+
+    CreateAdasCalibrationBody:
+      type: object
+      properties:
+        vehicleId:
+          type: integer
+        system:
+          type: string
+        calibrationType:
+          type: string
+          enum: [static, dynamic, both]
+        notes:
+          type: string
+      required:
+        - vehicleId
+        - system
+        - calibrationType
+
+    AdasSystem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        supportedCalibrationTypes:
+          type: array
+          items:
+            type: string
+        requiresTargetBoard:
+          type: boolean
+        requiresLevel:
+          type: boolean
+      required:
+        - id
+        - name
+        - code
+        - description
+        - supportedCalibrationTypes
+        - requiresTargetBoard
+        - requiresLevel
+
+    ProgrammingSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        vehicleName:
+          type: string
+        type:
+          type: string
+          enum: [ecu_programming, ecu_coding, key_programming, immobilizer, adaptation]
+        ecuModule:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+        progressPercent:
+          type: integer
+        notes:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - vehicleId
+        - type
+        - ecuModule
+        - status
+        - startedAt
+
+    StartProgrammingSessionBody:
+      type: object
+      properties:
+        vehicleId:
+          type: integer
+        type:
+          type: string
+          enum: [ecu_programming, ecu_coding, key_programming, immobilizer, adaptation]
+        ecuModule:
+          type: string
+        notes:
+          type: string
+      required:
+        - vehicleId
+        - type
+        - ecuModule
+
+    ServiceReset:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        vehicleName:
+          type: string
+        resetType:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, pending]
+        notes:
+          type: string
+        performedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - vehicleId
+        - resetType
+        - status
+        - performedAt
+
+    PerformServiceResetBody:
+      type: object
+      properties:
+        vehicleId:
+          type: integer
+        resetType:
+          type: string
+        notes:
+          type: string
+      required:
+        - vehicleId
+        - resetType
+
+    ResetType:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        requiresObd:
+          type: boolean
+      required:
+        - id
+        - code
+        - name
+        - description
+        - category
+        - requiresObd
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        vehicleName:
+          type: string
+        sessionId:
+          type: integer
+        title:
+          type: string
+        type:
+          type: string
+          enum: [diagnostic, pre_inspection, post_repair, full_inspection]
+        dtcCount:
+          type: integer
+        status:
+          type: string
+          enum: [draft, finalized, shared]
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - vehicleId
+        - title
+        - type
+        - dtcCount
+        - status
+        - createdAt
+
+    CreateReportBody:
+      type: object
+      properties:
+        vehicleId:
+          type: integer
+        sessionId:
+          type: integer
+        title:
+          type: string
+        type:
+          type: string
+          enum: [diagnostic, pre_inspection, post_repair, full_inspection]
+        notes:
+          type: string
+      required:
+        - vehicleId
+        - title
+        - type
+
+    UpdateStatus:
+      type: object
+      properties:
+        firmwareVersion:
+          type: string
+        softwareVersion:
+          type: string
+        vehicleCoverageVersion:
+          type: string
+        lastChecked:
+          type: string
+          format: date-time
+        updatesAvailable:
+          type: integer
+        autoUpdate:
+          type: boolean
+      required:
+        - firmwareVersion
+        - softwareVersion
+        - vehicleCoverageVersion
+        - updatesAvailable
+        - autoUpdate
+
+    SoftwareUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        version:
+          type: string
+        type:
+          type: string
+          enum: [firmware, vehicle_coverage, feature_module, security]
+        sizeKb:
+          type: integer
+        description:
+          type: string
+        releaseDate:
+          type: string
+          format: date-time
+        mandatory:
+          type: boolean
+      required:
+        - id
+        - name
+        - version
+        - type
+        - sizeKb
+        - description
+        - releaseDate
+        - mandatory
+
+    SystemSettings:
+      type: object
+      properties:
+        language:
+          type: string
+        units:
+          type: string
+          enum: [metric, imperial]
+        brightness:
+          type: integer
+        volume:
+          type: integer
+        autoSleep:
+          type: integer
+        dateFormat:
+          type: string
+        timezone:
+          type: string
+        wifiEnabled:
+          type: boolean
+        bluetoothEnabled:
+          type: boolean
+        autoConnect:
+          type: boolean
+        printHeader:
+          type: string
+        shopName:
+          type: string
+        technicianName:
+          type: string
+      required:
+        - language
+        - units
+        - brightness
+        - volume
+        - autoSleep
+
+    DeviceInfo:
+      type: object
+      properties:
+        deviceModel:
+          type: string
+        serialNumber:
+          type: string
+        firmwareVersion:
+          type: string
+        softwareVersion:
+          type: string
+        vehicleCoverageVersion:
+          type: string
+        imei:
+          type: string
+        wifiMac:
+          type: string
+        androidVersion:
+          type: string
+        totalStorage:
+          type: integer
+        usedStorage:
+          type: integer
+        batteryLevel:
+          type: integer
+        batteryStatus:
+          type: string
+          enum: [charging, discharging, full]
+        connectedVci:
+          type: string
+        vciSerialNumber:
+          type: string
+        vciStatus:
+          type: string
+          enum: [connected, disconnected, connecting]
+      required:
+        - deviceModel
+        - serialNumber
+        - firmwareVersion
+        - softwareVersion
+        - vehicleCoverageVersion
+        - batteryLevel
+        - batteryStatus
+        - vciStatus
+    AnthropicConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+    AnthropicMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+    CreateAnthropicConversationBody:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+    SendAnthropicMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+    AnthropicConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnthropicMessage"
+      required:
+        - id
+        - title
+        - createdAt
+        - messages
+    AnthropicError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

@@ -1,0 +1,6 @@
+{
+  "name": "Autel MaxiSYS MS Ultra S2",
+  "description": "Full web recreation of the Autel MaxiSYS MS Ultra S2 professional automotive diagnostic scanner with ~98% feature parity.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": []
+}
