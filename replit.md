@@ -54,6 +54,7 @@ Full web recreation of the Autel MaxiSYS MS Ultra S2 professional automotive dia
 - Arabic/English bilingual with RTL support
 - Real OBD-II connectivity (ELM327 via Bluetooth/USB)
 - Claude-powered AI Assistant + "Hey Max" wake word voice activation
+- High-performance AI diagnostics: SSE streaming, repeated-answer cache, compact conversation context, browser-side throttled rendering, stop-response control, and a local expert diagnostic engine for core DTCs when the external AI service is unavailable
 - PWA manifest + service worker
 - Voice commands (22 commands), keyboard shortcuts, QR codes, Excel export
 - Dark/light theme toggle

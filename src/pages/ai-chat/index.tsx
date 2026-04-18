@@ -73,14 +73,38 @@ export default function AiChatPage() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
   const [listening, setListening] = useState(false);
+  const [status, setStatus] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const cacheRef = useRef<Map<string, string>>(new Map());
+  const pendingTextRef = useRef("");
+  const rafRef = useRef<number | null>(null);
 
   const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("autel-ai-chat-v2");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as Message[];
+        setMessages(parsed.slice(-20).map(m => ({ ...m, isStreaming: false })));
+      } catch {}
+    }
+    return () => {
+      abortRef.current?.abort();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (messages.some(m => m.isStreaming)) return;
+    localStorage.setItem("autel-ai-chat-v2", JSON.stringify(messages.slice(-20)));
   }, [messages]);
 
   const buildSystemPrompt = useCallback(() => {
@@ -89,31 +113,72 @@ export default function AiChatPage() {
       : "";
     const dtcPart = DEMO_DTCS.map(d => `${d.code}: ${isAr ? d.descAr : d.desc} [${d.severity}]`).join(", ");
     return isAr
-      ? `أنت مساعد تشخيص سيارات متخصص لجهاز Autel MaxiSYS MS Ultra S2. ${vehiclePart} الأعطال النشطة: ${dtcPart}. أجب بالعربية بشكل واضح واحترافي. قدّم خطوات عملية ومحددة. استخدم الأرقام والرموز لتنظيم الإجابة.`
-      : `You are an expert automotive diagnostic AI for Autel MaxiSYS MS Ultra S2. ${vehiclePart} Active DTCs: ${dtcPart}. Respond clearly and professionally. Provide practical, specific steps. Use numbers and bullets to organize answers.`;
+      ? `أنت مساعد تشخيص سيارات خبير لجهاز Autel MaxiSYS MS Ultra S2. ${vehiclePart} الأعطال النشطة: ${dtcPart}. أجب بالعربية بشكل عملي ومباشر. ابدأ بالسبب الأرجح، ثم خطوات الفحص، ثم مستوى الخطورة، ثم تقدير الوقت والتكلفة عند الحاجة. لا تطل إذا كان السؤال بسيطاً.`
+      : `You are an expert automotive diagnostic AI for Autel MaxiSYS MS Ultra S2. ${vehiclePart} Active DTCs: ${dtcPart}. Be practical and direct. Start with the most likely cause, then test steps, urgency, and time/cost when useful. Keep simple questions concise.`;
   }, [activeVehicle, isAr]);
+
+  const flushStreamingText = useCallback(() => {
+    rafRef.current = null;
+    const nextText = pendingTextRef.current;
+    setMessages(prev => prev.map((m, i) =>
+      i === prev.length - 1 ? { ...m, content: nextText } : m
+    ));
+  }, []);
+
+  const queueStreamingText = useCallback((text: string) => {
+    pendingTextRef.current = text;
+    if (rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(flushStreamingText);
+    }
+  }, [flushStreamingText]);
+
+  function stopResponse() {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
+    setStatus("");
+    setMessages(prev => prev.map((m, i) =>
+      i === prev.length - 1 && m.role === "assistant" ? { ...m, isStreaming: false } : m
+    ));
+  }
 
   async function send(text?: string) {
     const msg = (text ?? input).trim();
     if (!msg || loading) return;
     setInput("");
+    setStatus(isAr ? "تحليل سريع للبيانات..." : "Analyzing data...");
 
-    // eslint-disable-next-line react-hooks/purity
-    const now = Date.now();
-    const userMsg: Message = { role: "user", content: msg, ts: now };
-    const assistantMsg: Message = { role: "assistant", content: "", ts: now + 1, isStreaming: true };
+    const userMsg: Message = { role: "user", content: msg, ts: Date.now() };
+    const assistantMsg: Message = { role: "assistant", content: "", ts: Date.now() + 1, isStreaming: true };
+    const prompt = buildSystemPrompt();
+    const cacheKey = JSON.stringify({ msg, prompt, lang }).toLowerCase().replace(/\s+/g, " ");
+    const cached = cacheRef.current.get(cacheKey);
 
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setLoading(true);
 
+    if (cached) {
+      setStatus(isAr ? "تم جلب رد محفوظ عالي السرعة" : "Loaded high-speed cached answer");
+      setMessages(prev => prev.map((m, i) =>
+        i === prev.length - 1 ? { ...m, content: cached, isStreaming: false } : m
+      ));
+      setLoading(false);
+      setTimeout(() => setStatus(""), 900);
+      return;
+    }
+
     try {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
       const res = await fetch(`${BASE}/api/ai/diagnose`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           message: msg,
-          systemPrompt: buildSystemPrompt(),
-          history: messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
+          systemPrompt: prompt,
+          history: messages.filter(m => !m.isStreaming).slice(-6).map(m => ({ role: m.role, content: m.content })),
         }),
       });
 
@@ -121,8 +186,9 @@ export default function AiChatPage() {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let streamText = "";
+      let aiText = "";
       let buf = "";
+      setStatus(isAr ? "الرد يصل الآن..." : "Streaming answer...");
 
       while (true) {
         const { done, value } = await reader.read();
@@ -135,30 +201,37 @@ export default function AiChatPage() {
           if (!line || line === "[DONE]") continue;
           try {
             const parsed = JSON.parse(line);
+            if (parsed.error) throw new Error(parsed.error);
             if (parsed.delta?.text) {
-              const nextText = streamText + parsed.delta.text;
-              streamText = nextText;
-              setMessages(prev => prev.map((m, i) =>
-                i === prev.length - 1 ? { ...m, content: nextText } : m
-              ));
+              aiText += parsed.delta.text;
+              queueStreamingText(aiText);
             }
-          } catch (pe) {
-            console.error(pe);
-          }
+          } catch {}
         }
       }
 
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      pendingTextRef.current = aiText;
+      cacheRef.current.set(cacheKey, aiText);
       setMessages(prev => prev.map((m, i) =>
-        i === prev.length - 1 ? { ...m, isStreaming: false } : m
+        i === prev.length - 1 ? { ...m, content: aiText, isStreaming: false } : m
       ));
-    } catch {
+      setStatus(isAr ? "تم التحليل" : "Analysis complete");
+      setTimeout(() => setStatus(""), 900);
+    } catch (error) {
+      if ((error as Error).name === "AbortError") return;
       setMessages(prev => prev.map((m, i) =>
         i === prev.length - 1
-          ? { ...m, content: isAr ? "حدث خطأ في الاتصال. يرجى المحاولة مجدداً." : "Connection error. Please try again.", isStreaming: false }
+          ? { ...m, content: isAr ? "تعذر الاتصال بخدمة التشخيص الآن. أعد المحاولة أو استخدم أحد الأكواد السريعة من القائمة." : "The diagnostic service is unavailable. Please retry or use a quick DTC action from the list.", isStreaming: false }
           : m
       ));
     } finally {
+      abortRef.current = null;
       setLoading(false);
+      if (!status) setStatus("");
     }
   }
 
@@ -303,9 +376,20 @@ export default function AiChatPage() {
               {isAr ? "محادثة التشخيص بالذكاء الاصطناعي" : "AI Diagnostic Chat"}
             </span>
             <span className="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[9px] text-blue-400 font-mono">
-              GPT-4 CLASS
+              HIGH PERFORMANCE
             </span>
+            {status && <span className="text-[9px] text-slate-500">{status}</span>}
           </div>
+          <div className="flex items-center gap-2">
+          {loading && (
+            <button
+              onClick={stopResponse}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] text-amber-400 bg-amber-500/5 border border-amber-500/15 transition-all"
+            >
+              <X className="w-3 h-3" />
+              {isAr ? "إيقاف" : "Stop"}
+            </button>
+          )}
           {messages.length > 0 && (
             <button
               onClick={() => setMessages([])}
@@ -315,6 +399,7 @@ export default function AiChatPage() {
               {isAr ? "مسح" : "Clear"}
             </button>
           )}
+          </div>
         </div>
 
         {/* Messages */}
@@ -403,7 +488,6 @@ export default function AiChatPage() {
 
                   <div className="mt-1.5 flex items-center gap-2">
                     <span className="text-[9px] text-slate-600">
-                      {/* eslint-disable-next-line react-hooks/purity */}
                       {new Date(msg.ts).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                     {msg.role === "assistant" && !msg.isStreaming && (
