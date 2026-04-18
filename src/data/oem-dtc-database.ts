@@ -854,14 +854,14 @@ export const OEM_DTC_DATABASE: DtcEntry[] = [
 ];
 
 export const OEM_MANUFACTURERS = [
-  { id: "Toyota", name: "Toyota / Lexus", nameAr: "تويوتا / لكزس", flag: "🇯🇵" },
-  { id: "Nissan", name: "Nissan / Infiniti", nameAr: "نيسان / إنفينيتي", flag: "🇯🇵" },
-  { id: "Honda", name: "Honda / Acura", nameAr: "هوندا / أكورا", flag: "🇯🇵" },
-  { id: "BMW", name: "BMW / Mini", nameAr: "بي إم دبليو / ميني", flag: "🇩🇪" },
-  { id: "Mercedes-Benz", name: "Mercedes-Benz", nameAr: "مرسيدس بنز", flag: "🇩🇪" },
-  { id: "Volkswagen", name: "Volkswagen / Audi", nameAr: "فولكسواغن / أودي", flag: "🇩🇪" },
-  { id: "Ford", name: "Ford / Lincoln", nameAr: "فورد / لينكولن", flag: "🇺🇸" },
-  { id: "GM", name: "GM / Chevrolet / GMC", nameAr: "جي إم / شيفروليه / جي إم سي", flag: "🇺🇸" },
-  { id: "Hyundai", name: "Hyundai / Kia", nameAr: "هيونداي / كيا", flag: "🇰🇷" },
-  { id: "Land Rover", name: "Land Rover / Jaguar", nameAr: "لاند روفر / جاغوار", flag: "🇬🇧" },
+  { id: "Toyota",       name: "Toyota / Lexus",          label: "Toyota / Lexus",          nameAr: "تويوتا / لكزس",         flag: "🇯🇵", color: "text-red-400",    bg: "bg-red-500/10",    border: "border-red-500/30" },
+  { id: "Nissan",       name: "Nissan / Infiniti",        label: "Nissan / Infiniti",        nameAr: "نيسان / إنفينيتي",      flag: "🇯🇵", color: "text-rose-400",   bg: "bg-rose-500/10",   border: "border-rose-500/30" },
+  { id: "Honda",        name: "Honda / Acura",            label: "Honda / Acura",            nameAr: "هوندا / أكورا",          flag: "🇯🇵", color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/30" },
+  { id: "BMW",          name: "BMW / Mini",               label: "BMW / Mini",               nameAr: "بي إم دبليو / ميني",    flag: "🇩🇪", color: "text-blue-400",   bg: "bg-blue-500/10",   border: "border-blue-500/30" },
+  { id: "Mercedes-Benz",name: "Mercedes-Benz",            label: "Mercedes-Benz",            nameAr: "مرسيدس بنز",            flag: "🇩🇪", color: "text-slate-300",  bg: "bg-slate-500/10",  border: "border-slate-500/30" },
+  { id: "Volkswagen",   name: "Volkswagen / Audi",        label: "Volkswagen / Audi",        nameAr: "فولكسواغن / أودي",      flag: "🇩🇪", color: "text-cyan-400",   bg: "bg-cyan-500/10",   border: "border-cyan-500/30" },
+  { id: "Ford",         name: "Ford / Lincoln",           label: "Ford / Lincoln",           nameAr: "فورد / لينكولن",         flag: "🇺🇸", color: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/30" },
+  { id: "GM",           name: "GM / Chevrolet / GMC",     label: "GM / Chevrolet / GMC",     nameAr: "جي إم / شيفروليه / جي إم سي", flag: "🇺🇸", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30" },
+  { id: "Hyundai",      name: "Hyundai / Kia",            label: "Hyundai / Kia",            nameAr: "هيونداي / كيا",          flag: "🇰🇷", color: "text-teal-400",   bg: "bg-teal-500/10",   border: "border-teal-500/30" },
+  { id: "Land Rover",   name: "Land Rover / Jaguar",      label: "Land Rover / Jaguar",      nameAr: "لاند روفر / جاغوار",    flag: "🇬🇧", color: "text-green-400",  bg: "bg-green-500/10",  border: "border-green-500/30" },
 ];

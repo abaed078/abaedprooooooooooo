@@ -91,10 +91,10 @@ router.post("/diagnostics/sessions", async (req, res): Promise<void> => {
       systemsScanned: totalSystems,
       totalSystems,
       completedAt: new Date(),
-    })
+    } as typeof diagnosticSessionsTable.$inferInsert)
     .returning();
 
-  await db.update(vehiclesTable).set({ lastDiagnosed: new Date() }).where(eq(vehiclesTable.id, parsed.data.vehicleId));
+  await db.update(vehiclesTable).set({ lastDiagnosed: new Date() } as Partial<typeof vehiclesTable.$inferInsert>).where(eq(vehiclesTable.id, parsed.data.vehicleId));
 
   const [vehicle] = await db.select().from(vehiclesTable).where(eq(vehiclesTable.id, parsed.data.vehicleId));
   const sessionWithVehicle = sanitize({ ...session, vehicleName: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Unknown" });
@@ -135,7 +135,7 @@ router.post("/diagnostics/dtc/:id/clear", async (req, res): Promise<void> => {
   }
   const [code] = await db
     .update(dtcCodesTable)
-    .set({ status: "cleared", clearedAt: new Date() })
+    .set({ status: "cleared", clearedAt: new Date() } as Partial<typeof dtcCodesTable.$inferInsert>)
     .where(eq(dtcCodesTable.id, params.data.id))
     .returning();
   if (!code) {

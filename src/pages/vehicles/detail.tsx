@@ -32,7 +32,7 @@ function TimelineEntry({ date, title, subtitle, icon, color }: {
 }
 
 export default function VehicleDetail() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const vehicleId = parseInt(id || "0", 10);
   const { lang } = useI18n();
 

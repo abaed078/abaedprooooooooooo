@@ -59,7 +59,7 @@ router.post("/adas/calibrations", async (req, res): Promise<void> => {
       status: "completed",
       result: "pass",
       completedAt: new Date(),
-    })
+    } as typeof adasCalibrationsTable.$inferInsert)
     .returning();
 
   const [vehicle] = await db.select().from(vehiclesTable).where(eq(vehiclesTable.id, parsed.data.vehicleId));

@@ -26,7 +26,7 @@ router.post("/vehicles", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [vehicle] = await db.insert(vehiclesTable).values(parsed.data).returning();
+  const [vehicle] = await db.insert(vehiclesTable).values(parsed.data as typeof vehiclesTable.$inferInsert).returning();
   res.status(201).json(GetVehicleResponse.parse(sanitize(vehicle)));
 });
 

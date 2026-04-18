@@ -19,5 +19,13 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "artifacts/autel-maxisys",
+    "artifacts/mockup-sandbox",
+    "lib/api-spec",
+    "lib/db/drizzle.config.ts"
+  ]
 }

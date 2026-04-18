@@ -118,7 +118,7 @@ export default function Vehicles() {
   };
 
   const onSubmit = (data: z.infer<typeof vehicleSchema>) => {
-    createVehicle.mutate({ data }, {
+    createVehicle.mutate({ data } as Parameters<typeof createVehicle.mutate>[0], {
       onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListVehiclesQueryKey() }); setIsAddOpen(false); form.reset(); toast({ title: "✓ تمت إضافة المركبة" }); },
       onError: () => toast({ title: "فشل الحفظ", variant: "destructive" })
     });

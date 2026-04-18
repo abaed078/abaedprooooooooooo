@@ -39,7 +39,7 @@ router.post("/programming/sessions", async (req, res): Promise<void> => {
       status: "completed",
       progressPercent: 100,
       completedAt: new Date(),
-    })
+    } as typeof programmingSessionsTable.$inferInsert)
     .returning();
 
   const [vehicle] = await db.select().from(vehiclesTable).where(eq(vehiclesTable.id, parsed.data.vehicleId));

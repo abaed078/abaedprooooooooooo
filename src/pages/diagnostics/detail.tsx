@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link } from "wouter";
 import {
   useGetDiagnosticSession, useListDtcCodes, useGetLiveData,
@@ -823,7 +823,7 @@ function AiPanel({ session, dtcCodes, liveData, lang }: {
    MAIN PAGE
 ══════════════════════════════════════════════════════════════ */
 export default function DiagnosticSessionDetail() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const sessionId = parseInt(id || "0", 10);
   const { toast } = useToast();
   const queryClient = useQueryClient();

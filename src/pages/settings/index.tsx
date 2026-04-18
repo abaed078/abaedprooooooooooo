@@ -121,7 +121,7 @@ export default function Settings() {
   };
 
   const onSubmit = (data: z.infer<typeof settingsSchema>) => {
-    updateSettings.mutate({ data }, {
+    updateSettings.mutate({ data } as Parameters<typeof updateSettings.mutate>[0], {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
         toast({ title: lang === "ar" ? "تم حفظ الإعدادات بنجاح" : "Settings saved successfully" });

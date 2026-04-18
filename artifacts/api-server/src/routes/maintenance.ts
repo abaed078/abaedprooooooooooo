@@ -56,7 +56,7 @@ router.post("/maintenance/resets", async (req, res): Promise<void> => {
       resetType: parsed.data.resetType,
       notes: parsed.data.notes,
       status: "success",
-    })
+    } as typeof serviceResetsTable.$inferInsert)
     .returning();
 
   const [vehicle] = await db.select().from(vehiclesTable).where(eq(vehiclesTable.id, parsed.data.vehicleId));

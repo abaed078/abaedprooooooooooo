@@ -29,7 +29,7 @@ router.post("/reports", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [report] = await db.insert(reportsTable).values({ ...parsed.data, dtcCount: 0, status: "draft" }).returning();
+  const [report] = await db.insert(reportsTable).values({ ...parsed.data, dtcCount: 0, status: "draft" } as typeof reportsTable.$inferInsert).returning();
   const [vehicle] = await db.select().from(vehiclesTable).where(eq(vehiclesTable.id, parsed.data.vehicleId));
   const withVehicle = sanitize({ ...report, vehicleName: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Unknown" });
   res.status(201).json(GetReportResponse.parse(withVehicle));

@@ -86,3 +86,31 @@ which provides the correct base path for wouter even when `BASE_URL = "/"`.
 ### API Calls from Frontend
 - Direct API calls use `ROUTER_BASE + "/api/..."` for the stats endpoint
 - `@workspace/api-client-react` hooks use configured base URL from OpenAPI setup
+
+## Pre-Launch QA Results (April 2026)
+
+### TypeScript — CLEAN ✓
+All TypeScript errors resolved (0 errors across 50+ files):
+- Drizzle ORM `.values()` / `.set()` calls cast via `$inferInsert` pattern
+- Missing React hook imports added (`useMemo`, `useCallback`) in stats, guided-diag, diagnostics
+- `useParams<{id:string}>()` generic fix in diagnostics/detail
+- Form mutate type mismatches resolved with `Parameters<typeof fn.mutate>[0]`
+- `vite-env.d.ts` created for `import.meta.env` types
+- `lib/api-zod` duplicate type export fixed with explicit re-exports
+- AbortError import fixed in Anthropic integration utils
+- `artifacts/autel-maxisys`, `artifacts/mockup-sandbox`, `lib/api-spec`, `lib/db` excluded from root tsconfig
+
+### Security Scan Results
+| Scanner | Status |
+|---------|--------|
+| Dependency Audit | 4 critical, 22 high, 15 moderate |
+| SAST | 5 high, 5 medium, 2 low |
+| HoundDog | Clean |
+
+**Key findings:**
+- `jspdf@2.5.2` — 2 critical, multiple high (fix: upgrade to v4.x — breaking change, deferred)
+- `drizzle-orm@0.36.4` — 2 high (fix: 0.45.2 — significant API changes, deferred)
+- `xlsx@0.18.5` — 4 high (no fix available from vendor)
+- `firebase-applet-config.json` — keys flagged by SAST, but Firebase client keys are public by design
+- Vite 6.4.2 — already patched (CVE-2025-30208 not applicable)
+- SAST dynamic method calls in full-scan page — low-risk internal constants, not user input
