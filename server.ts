@@ -12,7 +12,7 @@ import apiRouter from "./artifacts/api-server/src/routes/index";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = parseInt(process.env.PORT || "5000", 10);
 
   app.use(cors());
   app.use(express.json());
@@ -102,7 +102,7 @@ async function startServer() {
   });
 
   server.listen(PORT, "0.0.0.0", () => {
-    logger.info({ port: PORT }, "Server listening on port 3000");
+    logger.info({ port: PORT }, `Server listening on port ${PORT}`);
   });
 }
 
