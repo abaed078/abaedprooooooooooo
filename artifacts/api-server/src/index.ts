@@ -1,3 +1,4 @@
+import "./env-init";
 import http from "http";
 import net from "net";
 import { WebSocketServer, WebSocket } from "ws";

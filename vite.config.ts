@@ -18,5 +18,15 @@ export default defineConfig({
     port: parseInt(process.env.PORT || "5000", 10),
     host: "0.0.0.0",
     allowedHosts: true,
+    watch: {
+      ignored: [
+        "**/.local/**",
+        "**/.cache/**",
+        "**/node_modules/**",
+        "**/artifacts/**",
+        "**/lib/**",
+        "**/dist/**",
+      ],
+    },
   },
 });
