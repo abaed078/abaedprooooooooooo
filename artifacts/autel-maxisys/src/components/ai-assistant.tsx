@@ -33,9 +33,12 @@ export default function AiAssistant() {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cacheRef = useRef<Map<string, { content: string; expires: number }>>(new Map());
+  const abortRef = useRef<AbortController | null>(null);
 
   const isAr = lang === "ar";
   const quickPrompts = isAr ? QUICK_PROMPTS_AR : QUICK_PROMPTS_EN;
+  const basePath = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
 
   useEffect(() => {
     if (open && !minimized) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,9 +65,22 @@ export default function AiAssistant() {
       ? `أنت مساعد تشخيص سيارات متخصص لجهاز Autel MaxiSYS MS Ultra S2. ${vehicleCtx}أجب بشكل واضح ومختصر باللغة العربية. ركز على الحلول العملية.`
       : `You are an expert automotive diagnostic assistant for the Autel MaxiSYS MS Ultra S2. ${vehicleCtx}Provide clear, concise technical answers. Focus on practical solutions.`;
 
+    const cacheKey = `${lang}:${activeVehicle?.id ?? "none"}:${msg.toLowerCase()}`;
+    const cached = cacheRef.current.get(cacheKey);
+    if (cached && cached.expires > Date.now()) {
+      setMessages(prev => [...prev, { role: "assistant", content: cached.content, ts: Date.now() }]);
+      setLoading(false);
+      return;
+    }
+    if (cached) cacheRef.current.delete(cacheKey);
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      const res = await fetch("/api/ai/diagnose", {
+      const res = await fetch(`${basePath}/api/ai/diagnose`, {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: msg,
@@ -78,14 +94,26 @@ export default function AiAssistant() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let assistantText = "";
+      let buffer = "";
+      let raf = 0;
       const assistantMsg: Message = { role: "assistant", content: "", ts: Date.now() };
       setMessages(prev => [...prev, assistantMsg]);
+      const flushText = () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          setMessages(prev => prev.map((m, i) =>
+            i === prev.length - 1 ? { ...m, content: assistantText } : m
+          ));
+        });
+      };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
@@ -94,21 +122,27 @@ export default function AiAssistant() {
               const json = JSON.parse(data);
               const delta = json.delta?.text ?? json.choices?.[0]?.delta?.content ?? "";
               assistantText += delta;
-              setMessages(prev => prev.map((m, i) =>
-                i === prev.length - 1 ? { ...m, content: assistantText } : m
-              ));
+              flushText();
             } catch {}
           }
         }
       }
+      if (raf) cancelAnimationFrame(raf);
+      setMessages(prev => prev.map((m, i) =>
+        i === prev.length - 1 ? { ...m, content: assistantText } : m
+      ));
+      if (assistantText.trim()) cacheRef.current.set(cacheKey, { content: assistantText, expires: Date.now() + 10 * 60 * 1000 });
     } catch (err) {
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: isAr ? "حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى." : "Connection error. Please try again.",
-        ts: Date.now(),
-      }]);
+      if ((err as Error).name !== "AbortError") {
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: isAr ? "حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى." : "Connection error. Please try again.",
+          ts: Date.now(),
+        }]);
+      }
     } finally {
       setLoading(false);
+      if (abortRef.current === controller) abortRef.current = null;
     }
   }
 

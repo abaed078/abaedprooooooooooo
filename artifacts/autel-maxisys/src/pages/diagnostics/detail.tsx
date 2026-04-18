@@ -745,8 +745,13 @@ function AiPanel({ session, dtcCodes, liveData, lang }: {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
+  const renderInline = (line: string) => line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, i) => (
+    part.startsWith("**") && part.endsWith("**")
+      ? <strong key={i}>{part.slice(2, -2)}</strong>
+      : <span key={i}>{part}</span>
+  ));
   const render = (content: string) => content.split("\n").map((l, i) => (
-    <p key={i} className={l === "" ? "mt-2" : ""} dangerouslySetInnerHTML={{ __html: l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
+    <p key={i} className={l === "" ? "mt-2" : ""}>{renderInline(l)}</p>
   ));
 
   if (!convId) return (

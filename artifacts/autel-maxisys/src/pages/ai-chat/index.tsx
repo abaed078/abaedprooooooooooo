@@ -29,6 +29,23 @@ const QUICK_ACTIONS = [
   { icon: BookOpen, labelAr: "خطوات الإصلاح التفصيلية", labelEn: "Step-by-step repair guide", color: "text-violet-400" },
 ];
 
+function InlineMarkdown({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return <strong key={i} className="text-white">{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith("`") && part.endsWith("`")) {
+          return <code key={i} className="bg-white/10 px-1 rounded text-blue-300 font-mono text-[11px]">{part.slice(1, -1)}</code>;
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
 function MarkdownText({ text }: { text: string }) {
   const lines = text.split("\n");
   return (
@@ -48,15 +65,13 @@ function MarkdownText({ text }: { text: string }) {
           if (match) return (
             <div key={i} className="flex gap-2 text-[12px] text-slate-300">
               <span className="text-primary font-bold shrink-0 w-4">{match[1]}.</span>
-              <span dangerouslySetInnerHTML={{ __html: match[2].replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
+              <span><InlineMarkdown text={match[2]} /></span>
             </div>
           );
         }
         if (line.trim() === "") return <div key={i} className="h-1" />;
         return (
-          <p key={i} className="text-[12px] text-slate-300 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, "<strong class='text-white'>$1</strong>").replace(/`(.*?)`/g, "<code class='bg-white/10 px-1 rounded text-blue-300 font-mono text-[11px]'>$1</code>") }}
-          />
+          <p key={i} className="text-[12px] text-slate-300 leading-relaxed"><InlineMarkdown text={line} /></p>
         );
       })}
     </div>

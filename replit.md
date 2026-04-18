@@ -54,8 +54,8 @@ Full web recreation of the Autel MaxiSYS MS Ultra S2 professional automotive dia
 - Arabic/English bilingual with RTL support
 - Real OBD-II connectivity (ELM327 via Bluetooth/USB)
 - Claude-powered AI Assistant + "Hey Max" wake word voice activation
-- High-performance AI diagnostics: SSE streaming, repeated-answer cache, compact conversation context, browser-side throttled rendering, stop-response control, and a local expert diagnostic engine for core DTCs when the external AI service is unavailable
-- PWA manifest + service worker
+- High-performance AI diagnostics: SSE streaming, repeated-answer cache, compact conversation context, browser-side throttled rendering, stop-response control, safe markdown rendering, and a local expert diagnostic engine for core DTCs when the external AI service is unavailable
+- PWA manifest + service worker + installable app icons
 - Voice commands (22 commands), keyboard shortcuts, QR codes, Excel export
 - Dark/light theme toggle
 - AI Defect Detection in inspection camera (scratch, dent, crack, paint)
@@ -81,12 +81,19 @@ const ROUTER_BASE = (() => {
   return import.meta.env.BASE_URL.replace(/\/$/, "");
 })();
 ```
-The `index.html` has `<link rel="manifest" href="/autel-maxisys/manifest.json" />` hardcoded,
-which provides the correct base path for wouter even when `BASE_URL = "/"`.
+The router base fallback supports both root preview (`/manifest.json`) and path-based preview (`/[artifact]/manifest.json`) so the app can run correctly in development and after publishing.
 
 ### API Calls from Frontend
 - Direct API calls use `ROUTER_BASE + "/api/..."` for the stats endpoint
 - `@workspace/api-client-react` hooks use configured base URL from OpenAPI setup
+
+## Pre-Launch Improvement Pass (April 18, 2026)
+
+- Replaced user/AI rendered markdown HTML injection points in AI chat and diagnostic detail assistant with safe React rendering for bold/code text.
+- Added client-side caching, abort protection, base-path-safe API URLs, buffered SSE parsing, and animation-frame throttling to the floating AI assistant.
+- Improved page metadata for publishing: descriptive title, SEO description, Open Graph, Twitter card, install app metadata, and social preview image references.
+- Fixed PWA install readiness by adding required 192px and 512px icons and syncing public assets for both the root app and Autel artifact.
+- Updated service worker cache paths to work from the active registration scope instead of a hardcoded `/autel-maxisys` path.
 
 ## Pre-Launch QA Results (April 2026)
 
